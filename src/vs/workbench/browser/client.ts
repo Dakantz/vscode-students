@@ -62,7 +62,7 @@ export class CodeServerClient extends Disposable {
 				message: localize(
 					'insecureContext',
 					"{0} is being accessed in an insecure context. Web views, the clipboard, and other functionality may not work as expected.",
-					'code-server',
+					'code-tugraz',
 				),
 				actions: {
 					primary: [
@@ -160,7 +160,7 @@ export class CodeServerClient extends Disposable {
 			MenuRegistry.appendMenuItem(menuId, {
 				command: {
 					id: CodeServerClient.LOGOUT_COMMAND_ID,
-					title: localize('logout', "Sign out of {0}", 'code-server'),
+					title: localize('logout', "Sign out of {0}", 'code-tugraz'),
 				},
 			});
 		}

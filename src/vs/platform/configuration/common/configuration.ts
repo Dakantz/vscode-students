@@ -330,7 +330,10 @@ export function getConfigurationValue<T>(config: IStringDictionary<unknown>, set
 
 	const path = settingPath.split('.');
 	const result = accessSetting(config, path);
-
+	// DISABLE AI FEATURES: If the setting is "chat.disableAIFeatures", we always return true, regardless of the actual value in the configuration. This is a temporary measure to disable AI features in the application.
+	if (settingPath.endsWith("chat.disableAIFeatures")) {
+		return true as T;
+	}
 	return typeof result === 'undefined' ? defaultValue : result as T;
 }
 

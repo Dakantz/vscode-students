@@ -366,11 +366,10 @@ export class WebClientServer {
 			linkProtectionTrustedDomains.push(...this._productService.linkProtectionTrustedDomains);
 		}
 
-		const appName = this._environmentService.args['app-name'];
 		const productConfiguration: Partial<Mutable<IProductConfiguration>> = {
 			codeServerVersion: this._productService.codeServerVersion,
-			nameShort: appName,
-			nameLong: appName,
+			nameShort: this._productService.nameShort,
+			nameLong: this._productService.nameLong,
 			rootEndpoint: rootBase,
 			updateEndpoint: !this._environmentService.args['disable-update-check'] ? rootBase + '/update/check' : undefined,
 			logoutEndpoint: this._environmentService.args['auth'] && this._environmentService.args['auth'] !== "none" ? rootBase + '/logout' : undefined,
