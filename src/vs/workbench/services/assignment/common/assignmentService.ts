@@ -5,22 +5,19 @@
 
 import { localize } from '../../../../nls.js';
 import { createDecorator, IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';
-import type { IKeyValueStorage, IExperimentationTelemetry, ExperimentationService as TASClient } from 'tas-client';
-import { Memento } from '../../../common/memento.js';
+import type { IExperimentationTelemetry, ExperimentationService as TASClient } from 'tas-client';
 import { ITelemetryService } from '../../../../platform/telemetry/common/telemetry.js';
-import { IStorageService, StorageScope, StorageTarget } from '../../../../platform/storage/common/storage.js';
+import { IStorageService } from '../../../../platform/storage/common/storage.js';
 import { ITelemetryData } from '../../../../base/common/actions.js';
 import { InstantiationType, registerSingleton } from '../../../../platform/instantiation/common/extensions.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 import { IProductService } from '../../../../platform/product/common/productService.js';
-import { ASSIGNMENT_REFETCH_INTERVAL, ASSIGNMENT_STORAGE_KEY, AssignmentFilterProvider, IAssignmentService, TargetPopulation, WindowKind } from '../../../../platform/assignment/common/assignment.js';
+import { IAssignmentService } from '../../../../platform/assignment/common/assignment.js';
 import { Registry } from '../../../../platform/registry/common/platform.js';
 import { workbenchConfigurationNodeBase } from '../../../common/configuration.js';
 import { IConfigurationRegistry, Extensions as ConfigurationExtensions, ConfigurationScope } from '../../../../platform/configuration/common/configurationRegistry.js';
 import { IWorkbenchEnvironmentService } from '../../environment/common/environmentService.js';
-import { importAMDNodeModule } from '../../../../amdX.js';
 import { timeout } from '../../../../base/common/async.js';
-import { CopilotAssignmentFilterProvider } from './assignmentFilters.js';
 import { Disposable, DisposableStore } from '../../../../base/common/lifecycle.js';
 import { Emitter, Event } from '../../../../base/common/event.js';
 import { experimentsEnabled } from '../../telemetry/common/workbenchTelemetryUtils.js';
@@ -35,26 +32,6 @@ export const IWorkbenchAssignmentService = createDecorator<IWorkbenchAssignmentS
 export interface IWorkbenchAssignmentService extends IAssignmentService {
 	getCurrentExperiments(): Promise<string[] | undefined>;
 	addTelemetryAssignmentFilter(filter: IAssignmentFilter): void;
-}
-
-class MementoKeyValueStorage implements IKeyValueStorage {
-
-	private readonly mementoObj: Record<string, unknown>;
-
-	constructor(private readonly memento: Memento<Record<string, unknown>>) {
-		this.mementoObj = memento.getMemento(StorageScope.APPLICATION, StorageTarget.MACHINE);
-	}
-
-	async getValue<T>(key: string, defaultValue?: T | undefined): Promise<T | undefined> {
-		const value = await this.mementoObj[key] as T | undefined;
-
-		return value || defaultValue;
-	}
-
-	setValue<T>(key: string, value: T): void {
-		this.mementoObj[key] = value;
-		this.memento.saveMemento();
-	}
 }
 
 class WorkbenchAssignmentServiceTelemetry extends Disposable implements IExperimentationTelemetry {
@@ -147,13 +124,13 @@ export class WorkbenchAssignmentService extends Disposable implements IAssignmen
 	declare readonly _serviceBrand: undefined;
 
 	private readonly tasClient: Promise<TASClient> | undefined;
-	private readonly tasSetupDisposables = new DisposableStore();
+
 
 	private networkInitialized = false;
 	private readonly overrideInitDelay: Promise<void>;
 
 	private readonly telemetry: WorkbenchAssignmentServiceTelemetry;
-	private readonly keyValueStorage: IKeyValueStorage;
+
 
 	private readonly experimentsEnabled: boolean;
 
@@ -164,17 +141,14 @@ export class WorkbenchAssignmentService extends Disposable implements IAssignmen
 		@ITelemetryService private readonly telemetryService: ITelemetryService,
 		@IStorageService storageService: IStorageService,
 		@IConfigurationService private readonly configurationService: IConfigurationService,
-		@IProductService private readonly productService: IProductService,
+		@IProductService readonly productService: IProductService,
 		@IWorkbenchEnvironmentService private readonly environmentService: IWorkbenchEnvironmentService,
-		@IInstantiationService private readonly instantiationService: IInstantiationService,
+		@IInstantiationService readonly instantiationService: IInstantiationService,
 	) {
 		super();
 
 		this.experimentsEnabled = experimentsEnabled(configurationService, productService, this.environmentService);
 
-		if (this.experimentsEnabled) {
-			this.tasClient = this.setupTASClient();
-		}
 
 		this.telemetry = this._register(new WorkbenchAssignmentServiceTelemetry(telemetryService, productService));
 		this._register(this.telemetry.onDidUpdateAssignmentContext(() => this._onDidRefetchAssignments.fire()));
@@ -183,8 +157,6 @@ export class WorkbenchAssignmentService extends Disposable implements IAssignmen
 				this._onDidRefetchAssignments.fire();
 			}
 		}));
-
-		this.keyValueStorage = new MementoKeyValueStorage(new Memento<Record<string, unknown>>('experiment.service.memento', storageService));
 
 		// For development purposes, configure the delay until tas local tas treatment ovverrides are available
 		const overrideDelaySetting = configurationService.getValue('experiments.overrideDelay');
@@ -246,60 +218,6 @@ export class WorkbenchAssignmentService extends Disposable implements IAssignmen
 
 		result = client.getTreatmentVariable<T>('vscode', name);
 		return result;
-	}
-
-	private async setupTASClient(): Promise<TASClient> {
-		this.tasSetupDisposables.clear();
-
-		const targetPopulation = this.productService.quality === 'stable' ?
-			TargetPopulation.Public : (this.productService.quality === 'exploration' ?
-				TargetPopulation.Exploration : TargetPopulation.Insiders);
-
-		const filterProvider = new AssignmentFilterProvider(
-			this.productService.version,
-			this.productService.nameLong,
-			this.telemetryService.machineId,
-			this.telemetryService.devDeviceId,
-			targetPopulation,
-			this.productService.date ?? '',
-			this.environmentService.isSessionsWindow ? WindowKind.Agents : WindowKind.Editor
-		);
-
-		const extensionsFilterProvider = this.instantiationService.createInstance(CopilotAssignmentFilterProvider);
-		this.tasSetupDisposables.add(extensionsFilterProvider);
-		this.tasSetupDisposables.add(extensionsFilterProvider.onDidChangeFilters(() => this.refetchAssignments()));
-
-		const tasConfig = this.productService.tasConfig!;
-		const tasClient = new (await importAMDNodeModule<typeof import('tas-client')>('tas-client', 'dist/tas-client.min.js')).ExperimentationService({
-			filterProviders: [filterProvider, extensionsFilterProvider],
-			telemetry: this.telemetry,
-			storageKey: ASSIGNMENT_STORAGE_KEY,
-			keyValueStorage: this.keyValueStorage,
-			assignmentContextTelemetryPropertyName: tasConfig.assignmentContextTelemetryPropertyName,
-			telemetryEventName: tasConfig.telemetryEventName,
-			endpoint: tasConfig.endpoint,
-			refetchInterval: ASSIGNMENT_REFETCH_INTERVAL,
-		});
-
-		await tasClient.initializePromise;
-		tasClient.initialFetch.then(() => {
-			this.networkInitialized = true;
-		});
-
-		return tasClient;
-	}
-
-	private async refetchAssignments(): Promise<void> {
-		if (!this.tasClient) {
-			return; // Setup has not started, assignments will use latest filters
-		}
-
-		// Await the client to be setup and the initial fetch to complete
-		const tasClient = await this.tasClient;
-		await tasClient.initialFetch;
-
-		// Refresh the assignments
-		await tasClient.getTreatmentVariableAsync('vscode', 'refresh', false);
 	}
 
 	async getCurrentExperiments(): Promise<string[] | undefined> {

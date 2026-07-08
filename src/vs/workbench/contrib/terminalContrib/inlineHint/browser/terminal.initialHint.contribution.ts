@@ -22,17 +22,15 @@ import { IKeybindingService } from '../../../../../platform/keybinding/common/ke
 import { ITelemetryService } from '../../../../../platform/telemetry/common/telemetry.js';
 import { ITerminalCapabilityStore, TerminalCapability } from '../../../../../platform/terminal/common/capabilities/capabilities.js';
 import { AccessibilityVerbositySettingId } from '../../../accessibility/browser/accessibilityConfiguration.js';
-import { IChatAgent, IChatAgentService } from '../../../chat/common/participants/chatAgents.js';
-import { ChatAgentLocation } from '../../../chat/common/constants.js';
 import { IDetachedTerminalInstance, ITerminalConfigurationService, ITerminalContribution, ITerminalInstance, IXtermTerminal } from '../../../terminal/browser/terminal.js';
 import { registerTerminalContribution, type IDetachedCompatibleTerminalContributionContext, type ITerminalContributionContext } from '../../../terminal/browser/terminalExtensions.js';
 import { TerminalInstance } from '../../../terminal/browser/terminalInstance.js';
-import { TerminalChatCommandId } from '../../chat/browser/terminalChat.js';
+
 import { TerminalInitialHintSettingId } from '../common/terminalInitialHintConfiguration.js';
 import './media/terminalInitialHint.css';
 import { TerminalSuggestCommandId } from '../../suggest/common/terminal.suggest.js';
 import { TerminalSuggestSettingId } from '../../suggest/common/terminalSuggestConfiguration.js';
-import { IChatEntitlementService } from '../../../../services/chat/common/chatEntitlementService.js';
+
 
 const $ = dom.$;
 
@@ -42,7 +40,7 @@ export class InitialHintAddon extends Disposable implements ITerminalAddon {
 	private readonly _disposables = this._register(new MutableDisposable<DisposableStore>());
 
 	constructor(private readonly _capabilities: ITerminalCapabilityStore,
-		private readonly _onDidChangeAgents: Event<IChatAgent | undefined>) {
+		private readonly _onDidChangeAgents: Event<undefined>) {
 		super();
 	}
 	activate(terminal: RawXtermTerminal): void {
@@ -63,10 +61,6 @@ export class InitialHintAddon extends Disposable implements ITerminalAddon {
 			}));
 		}
 		const agentListener = this._onDidChangeAgents((e) => {
-			if (e?.locations.includes(ChatAgentLocation.Terminal)) {
-				this._onDidRequestCreateHint.fire();
-				agentListener.dispose();
-			}
 		});
 		this._disposables.value?.add(agentListener);
 	}
@@ -88,7 +82,6 @@ export class TerminalInitialHintContribution extends Disposable implements ITerm
 
 	constructor(
 		private readonly _ctx: ITerminalContributionContext | IDetachedCompatibleTerminalContributionContext,
-		@IChatAgentService private readonly _chatAgentService: IChatAgentService,
 		@IConfigurationService private readonly _configurationService: IConfigurationService,
 		@IInstantiationService private readonly _instantiationService: IInstantiationService,
 		@ITerminalConfigurationService private readonly _terminalConfigurationService: ITerminalConfigurationService,
@@ -110,9 +103,6 @@ export class TerminalInitialHintContribution extends Disposable implements ITerm
 			return;
 		}
 		this._xterm = xterm;
-		this._addon = this._register(this._instantiationService.createInstance(InitialHintAddon, this._ctx.instance.capabilities, this._chatAgentService.onDidChangeAgents));
-		this._xterm.raw.loadAddon(this._addon);
-		this._register(this._addon.onDidRequestCreateHint(() => this._createHint()));
 	}
 
 	private _disposeHint(): void {
@@ -213,8 +203,6 @@ class TerminalInitialHintWidget extends Disposable {
 
 	constructor(
 		private readonly _instance: ITerminalInstance,
-		@IChatAgentService private readonly _chatAgentService: IChatAgentService,
-		@IChatEntitlementService private readonly _chatEntitlementService: IChatEntitlementService,
 		@ICommandService private readonly _commandService: ICommandService,
 		@IConfigurationService private readonly _configurationService: IConfigurationService,
 		@IContextMenuService private readonly _contextMenuService: IContextMenuService,
@@ -257,7 +245,6 @@ class TerminalInitialHintWidget extends Disposable {
 				id: 'terminalInlineChat.hintAction',
 				from: 'hint'
 			});
-			this._commandService.executeCommand(TerminalChatCommandId.Start, { from: 'hint' });
 		};
 		const handleDontShowClick = () => {
 			this._configurationService.updateValue(TerminalInitialHintSettingId.Enabled, false);
@@ -290,68 +277,6 @@ class TerminalInitialHintWidget extends Disposable {
 		const copilotCliEnabled = this._configurationService.getValue(TerminalInitialHintSettingId.CopilotCli);
 
 		// Chat hint
-		if (!this._chatEntitlementService.sentiment.hidden) {
-			if (copilotCliEnabled) {
-				// Copilot CLI hint
-				const handleCopilotCliClick = () => {
-					this._telemetryService.publicLog2<WorkbenchActionExecutedEvent, WorkbenchActionExecutedClassification>('workbenchActionExecuted', {
-						id: 'terminalCopilotCli.hintAction',
-						from: 'hint'
-					});
-					this._instance.sendText('copilot', false);
-				};
-				const copilotCliHint = localize({
-					key: 'copilotCliHint',
-					comment: [
-						'Preserve double-square brackets and their order',
-					]
-				}, "Type [[copilot]] to use Copilot CLI.");
-				const copilotCliHintHandler: IContentActionHandler = {
-					callback: () => handleCopilotCliClick(),
-					disposables: this._toDispose
-				};
-				hintElement.appendChild(renderFormattedText(copilotCliHint, { actionHandler: copilotCliHintHandler }));
-				ariaLabelParts.push(localize('copilotCliHintAriaLabel', "Type copilot to use Copilot CLI."));
-			} else {
-				const keybindingHint = this._keybindingService.lookupKeybinding(TerminalChatCommandId.Start);
-				const keybindingHintLabel = keybindingHint?.getLabel();
-
-				if (keybindingHint && keybindingHintLabel) {
-					const terminalAgents = this._chatAgentService.getActivatedAgents().filter(candidate => candidate.locations.includes(ChatAgentLocation.Terminal));
-					if (terminalAgents?.length) {
-						const actionPart = localize('emptyHintText', 'Open chat {0}. ', keybindingHintLabel);
-
-						const { before, after } = this._createWrappedHintElements(actionPart, keybindingHintLabel, handleClick);
-
-						hintElement.appendChild(before);
-
-						const label = hintHandler.disposables.add(new KeybindingLabel(hintElement, OS));
-						label.set(keybindingHint);
-						label.element.style.width = 'min-content';
-						label.element.style.display = 'inline';
-
-						label.element.style.cursor = 'pointer';
-						this._toDispose.add(dom.addDisposableListener(label.element, dom.EventType.CLICK, handleClick));
-
-						hintElement.appendChild(after);
-						hintElement.appendChild($('span.terminal-initial-hint-separator'));
-
-						ariaLabelParts.push(actionPart);
-					}
-				} else {
-					const hintMsg = localize({
-						key: 'inlineChatHint',
-						comment: [
-							'Preserve double-square brackets and their order',
-						]
-					}, '[[Open chat]] or start typing to dismiss.');
-					const rendered = renderFormattedText(hintMsg, { actionHandler: hintHandler });
-					hintElement.appendChild(rendered);
-
-					ariaLabelParts.push(localize('openChatHint', 'Open chat or start typing to dismiss.'));
-				}
-			}
-		}
 
 		// Suggest hint (skip when Copilot CLI hint is shown)
 		const suggestEnabled = !copilotCliEnabled && this._configurationService.getValue<boolean>(TerminalSuggestSettingId.Enabled);

@@ -76,9 +76,6 @@ import '../workbench/services/configuration/common/jsonEditingService.js';
 import '../workbench/services/textmodelResolver/common/textModelResolverService.js';
 import '../workbench/services/editor/browser/editorService.js';
 import '../workbench/services/editor/browser/editorResolverService.js';
-import '../workbench/services/aiEmbeddingVector/common/aiEmbeddingVectorService.js';
-import '../workbench/services/aiRelatedInformation/common/aiRelatedInformationService.js';
-import '../workbench/services/aiSettingsSearch/common/aiSettingsSearchService.js';
 import '../workbench/services/history/browser/historyService.js';
 import '../workbench/services/activity/browser/activityService.js';
 import '../workbench/services/keybinding/browser/keybindingService.js';
@@ -139,9 +136,7 @@ import '../workbench/services/editor/browser/editorPaneService.js';
 import '../workbench/services/editor/common/customEditorLabelService.js';
 import '../workbench/services/dataChannel/browser/dataChannelService.js';
 import '../workbench/services/inlineCompletions/common/inlineCompletionsUnification.js';
-import '../workbench/services/chat/common/chatEntitlementService.js';
 import '../workbench/services/log/common/defaultLogLevels.js';
-import '../workbench/services/agentHost/common/agentHostResourceService.js';
 import '../platform/agentHost/browser/agentHostConnectionsService.js';
 import './services/agentHost/browser/agentHostCustomizationService.js';
 
@@ -218,12 +213,6 @@ import '../workbench/contrib/notebook/browser/notebook.contribution.js';
 // Speech
 import '../workbench/contrib/speech/browser/speech.contribution.js';
 
-// Chat
-import '../workbench/contrib/chat/browser/chat.shared.contribution.js';
-//import '../workbench/contrib/inlineChat/browser/inlineChat.contribution.js';
-import '../workbench/contrib/mcp/browser/mcp.contribution.js';
-import '../workbench/contrib/chat/browser/chatSessions/chatSessions.contribution.js';
-import '../workbench/contrib/chat/browser/contextContrib/chatContext.contribution.js';
 import '../workbench/contrib/imageCarousel/browser/imageCarousel.contribution.js';
 
 // Interactive
@@ -335,10 +324,6 @@ import '../workbench/contrib/relauncher/browser/relauncher.contribution.js';
 // Tasks
 import '../workbench/contrib/tasks/browser/task.contribution.js';
 
-// Remote
-import '../workbench/contrib/remote/common/remote.contribution.js';
-import '../workbench/contrib/remote/browser/remote.contribution.js';
-
 // Emmet
 import '../workbench/contrib/emmet/browser/emmet.contribution.js';
 
@@ -397,9 +382,6 @@ import '../workbench/contrib/userDataProfile/browser/userDataProfile.contributio
 // Continue Edit Session
 import '../workbench/contrib/editSessions/browser/editSessions.contribution.js';
 
-// Remote Coding Agents
-import '../workbench/contrib/remoteCodingAgents/browser/remoteCodingAgents.contribution.js';
-
 // Code Actions
 import '../workbench/contrib/codeActions/browser/codeActions.contribution.js';
 
@@ -453,12 +435,8 @@ import './services/sessions/browser/sessionsService.js';
 import './browser/parts/menubar.contribution.js';
 import './browser/layoutActions.js';
 
-import './contrib/accountMenu/browser/account.contribution.js';
-import './contrib/aiCustomizationTreeView/browser/aiCustomizationTreeView.contribution.js';
-import './contrib/chat/browser/chat.contribution.js';
 import './contrib/providers/agentHost/browser/exportDebugLogsAction.js';
 import './contrib/providers/agentHost/browser/agentHostSessionConfigPicker.js';
-import './contrib/chat/browser/customizationsDebugLog.contribution.js';
 import './contrib/providers/copilotChatSessions/browser/copilotChatSessions.contribution.js';
 import './contrib/providers/localChatSessions/browser/localChatSessions.contribution.js';
 import './contrib/sessions/browser/sessions.contribution.js';
@@ -470,7 +448,6 @@ import './contrib/sessions/browser/customizationsToolbar.contribution.js';
 import './contrib/changes/browser/changes.contribution.js';
 import './contrib/codeReview/browser/codeReview.contributions.js';
 import './contrib/files/browser/files.contribution.js';
-import './contrib/github/browser/github.contribution.js';
 import './contrib/applyCommitsToParentRepo/browser/applyChangesToParentRepo.js';
 import './contrib/fileTreeView/browser/fileTreeView.contribution.js'; // view registration disabled; filesystem provider still needed
 import './contrib/configuration/browser/configuration.contribution.js';
@@ -478,7 +455,6 @@ import './contrib/browserView/browser/sessionBrowserView.contribution.js';
 import './contrib/editor/browser/editor.contribution.js';
 
 import './contrib/terminal/browser/sessionsTerminalContribution.js';
-import './contrib/chatDebug/browser/chatDebug.contribution.js';
 import './contrib/workspace/browser/workspace.contribution.js';
 import './contrib/aquarium/browser/aquarium.contribution.js';
 import './contrib/policyBlocked/browser/policyBlocked.contribution.js';

@@ -11,8 +11,6 @@ import { ILogService } from '../../platform/log/common/log.js';
 import { IStorageService, StorageScope, StorageTarget } from '../../platform/storage/common/storage.js';
 import { IUserDataProfileStorageService } from '../../platform/userDataProfile/common/userDataProfileStorageService.js';
 import { IUserDataProfilesService } from '../../platform/userDataProfile/common/userDataProfile.js';
-import { ServiceCollection } from '../../platform/instantiation/common/serviceCollection.js';
-import { ChatEntitlementContext, IChatEntitlementService } from '../../workbench/services/chat/common/chatEntitlementService.js';
 import { isWeb } from '../../base/common/platform.js';
 import { GitHubPaths, IDefaultAccountService } from '../../platform/defaultAccount/common/defaultAccount.js';
 import { IProductService } from '../../platform/product/common/productService.js';
@@ -406,7 +404,6 @@ export class SessionsSetUpService extends Disposable implements ISessionsSetUpSe
 		@IInstantiationService private readonly instantiationService: IInstantiationService,
 		@IUserDataProfileStorageService private readonly userDataProfileStorageService: IUserDataProfileStorageService,
 		@IUserDataProfilesService private readonly userDataProfilesService: IUserDataProfilesService,
-		@IChatEntitlementService private readonly chatEntitlementService: IChatEntitlementService,
 		@ILogService private readonly logService: ILogService,
 	) {
 		super();
@@ -423,11 +420,10 @@ export class SessionsSetUpService extends Disposable implements ISessionsSetUpSe
 
 	private async whenSetupDone(): Promise<boolean> {
 		await this._initPromise;
-		return this.chatEntitlementService.sentiment.completed === true;
+		return true
 	}
 
 	private markDone(): void {
-		this.chatEntitlementService.markSetupCompleted();
 	}
 
 	whenWelcomeDone(): Promise<void> {
@@ -435,24 +431,12 @@ export class SessionsSetUpService extends Disposable implements ISessionsSetUpSe
 	}
 
 	private async initialize(): Promise<void> {
-		if (this.chatEntitlementService.sentiment.completed) {
-			return;
-		}
+
 
 		try {
 			const defaultProfile = this.userDataProfilesService.defaultProfile;
 			await this.userDataProfileStorageService.withProfileScopedStorageService(defaultProfile, async storageService => {
-				const defaultContext = this.instantiationService
-					.createChild(new ServiceCollection([IStorageService, storageService]))
-					.createInstance(ChatEntitlementContext);
-				try {
-					if (defaultContext.state.completed) {
-						this.logService.info('[sessions welcome] Setup already completed in default profile, marking done locally');
-						this.markDone();
-					}
-				} finally {
-					defaultContext.dispose();
-				}
+
 			});
 		} catch (error) {
 			this.logService.error('[sessions welcome] Failed to read setup state from default profile:', error);

@@ -31,7 +31,7 @@ import { mock } from '../../../../../base/test/common/mock.js';
 import { IExtensionBisectService } from '../../browser/extensionBisect.js';
 import { IWorkspaceTrustManagementService, IWorkspaceTrustRequestService, WorkspaceTrustRequestOptions } from '../../../../../platform/workspace/common/workspaceTrust.js';
 import { EXTENSIONS_SUPPORT_AGENTS_WINDOW, ExtensionManifestPropertiesService, IExtensionManifestPropertiesService } from '../../../extensions/common/extensionManifestPropertiesService.js';
-import { TestChatEntitlementService, TestContextService, TestProductService, TestWorkspaceTrustEnablementService, TestWorkspaceTrustManagementService } from '../../../../test/common/workbenchTestServices.js';
+import { TestContextService, TestProductService, TestWorkspaceTrustEnablementService, TestWorkspaceTrustManagementService } from '../../../../test/common/workbenchTestServices.js';
 import { TestWorkspace } from '../../../../../platform/workspace/test/common/testWorkspace.js';
 import { ExtensionManagementService } from '../../common/extensionManagementService.js';
 import { ILogService, NullLogService } from '../../../../../platform/log/common/log.js';
@@ -42,8 +42,6 @@ import { FileService } from '../../../../../platform/files/common/fileService.js
 import { IProductService } from '../../../../../platform/product/common/productService.js';
 import { AllowedExtensionsService } from '../../../../../platform/extensionManagement/common/allowedExtensionsService.js';
 import { IStringDictionary } from '../../../../../base/common/collections.js';
-import { ChatEntitlementContext, IChatEntitlementService } from '../../../chat/common/chatEntitlementService.js';
-import { Lazy } from '../../../../../base/common/lazy.js';
 import { IDefaultAccountService } from '../../../../../platform/defaultAccount/common/defaultAccount.js';
 import { IDefaultAccountAuthenticationProvider } from '../../../../../base/common/defaultAccount.js';
 
@@ -63,7 +61,7 @@ function createStorageService(instantiationService: TestInstantiationService, di
 }
 
 export class TestExtensionEnablementService extends ExtensionEnablementService {
-	constructor(instantiationService: TestInstantiationService, chatEntitlementService?: IChatEntitlementService) {
+	constructor(instantiationService: TestInstantiationService) {
 		const disposables = new DisposableStore();
 		const storageService = createStorageService(instantiationService, disposables);
 		const extensionManagementServerService = instantiationService.get(IExtensionManagementServerService) ||
@@ -102,7 +100,6 @@ export class TestExtensionEnablementService extends ExtensionEnablementService {
 			workspaceTrustManagementService,
 			new class extends mock<IWorkspaceTrustRequestService>() { override requestWorkspaceTrust(options?: WorkspaceTrustRequestOptions): Promise<boolean> { return Promise.resolve(true); } },
 			instantiationService.get(IExtensionManifestPropertiesService) || instantiationService.stub(IExtensionManifestPropertiesService, disposables.add(new ExtensionManifestPropertiesService(TestProductService, instantiationService.get(IConfigurationService), new TestWorkspaceTrustEnablementService(), new NullLogService()))),
-			chatEntitlementService ?? new TestChatEntitlementService(),
 			instantiationService,
 			new NullLogService(),
 			productService
@@ -1196,10 +1193,7 @@ suite('ExtensionEnablementService Test', () => {
 		storageService.store('builtinChatExtensionEnablementMigration', false, StorageScope.PROFILE, StorageTarget.MACHINE);
 
 		// Create a chat entitlement service with context where setup is not completed
-		const chatEntitlementService = new TestChatEntitlementService();
-		chatEntitlementService.context = new Lazy(() => ({ state: { completed: false }, onDidChange: Event.None })) as unknown as Lazy<ChatEntitlementContext>;
-
-		testObject = disposableStore.add(new TestExtensionEnablementService(instantiationService, chatEntitlementService));
+		testObject = disposableStore.add(new TestExtensionEnablementService(instantiationService));
 		await testObject.waitUntilInitialized();
 
 		// Chat extension should be disabled after initial setup
