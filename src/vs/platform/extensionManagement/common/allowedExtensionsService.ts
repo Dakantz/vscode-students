@@ -6,29 +6,19 @@
 import { Disposable } from '../../../base/common/lifecycle.js';
 import * as nls from '../../../nls.js';
 import { IGalleryExtension, AllowedExtensionsConfigKey, IAllowedExtensionsService, AllowedExtensionsConfigValueType } from './extensionManagement.js';
-import { ExtensionType, IExtension, TargetPlatform } from '../../extensions/common/extensions.js';
+import { IExtension, TargetPlatform } from '../../extensions/common/extensions.js';
 import { IProductService } from '../../product/common/productService.js';
-import { createCommandUri, IMarkdownString, MarkdownString } from '../../../base/common/htmlContent.js';
+import { IMarkdownString, MarkdownString } from '../../../base/common/htmlContent.js';
 import { IConfigurationService } from '../../configuration/common/configuration.js';
-import { isBoolean, isObject, isUndefined } from '../../../base/common/types.js';
+import { isObject } from '../../../base/common/types.js';
 import { Emitter } from '../../../base/common/event.js';
 
-function isGalleryExtension(extension: unknown): extension is IGalleryExtension {
-	return (extension as IGalleryExtension).type === 'gallery';
-}
-
-function isIExtension(extension: unknown): extension is IExtension {
-	return (extension as IExtension).type === ExtensionType.User || (extension as IExtension).type === ExtensionType.System;
-}
 
 
-const VersionRegex = /^(?<version>\d+\.\d+\.\d+(-.*)?)(@(?<platform>.+))?$/;
 
 export class AllowedExtensionsService extends Disposable implements IAllowedExtensionsService {
 
 	_serviceBrand: undefined;
-
-	private readonly publisherOrgs: string[];
 
 	private _allowedExtensionsConfigValue: AllowedExtensionsConfigValueType | undefined;
 	get allowedExtensionsConfigValue(): AllowedExtensionsConfigValueType | undefined {
@@ -42,7 +32,7 @@ export class AllowedExtensionsService extends Disposable implements IAllowedExte
 		@IConfigurationService protected readonly configurationService: IConfigurationService
 	) {
 		super();
-		this.publisherOrgs = productService.extensionPublisherOrgs?.map(p => p.toLowerCase()) ?? [];
+		// this.publisherOrgs = productService.extensionPublisherOrgs?.map(p => p.toLowerCase()) ?? [];
 		this._allowedExtensionsConfigValue = this.getAllowedExtensionsValue();
 		this._register(this.configurationService.onDidChangeConfiguration(e => {
 			if (e.affectsConfiguration(AllowedExtensionsConfigKey)) {
@@ -65,7 +55,9 @@ export class AllowedExtensionsService extends Disposable implements IAllowedExte
 	}
 
 	isAllowed(extension: IGalleryExtension | IExtension | { id: string; publisherDisplayName: string | undefined; version?: string; prerelease?: boolean; targetPlatform?: TargetPlatform }): true | IMarkdownString {
-		if (!this._allowedExtensionsConfigValue) {
+
+		return new MarkdownString(nls.localize('specific extension not allowed', "Tthis is a locked-down version of Code!"));
+		/*if (!this._allowedExtensionsConfigValue) {
 			return true;
 		}
 
@@ -139,6 +131,6 @@ export class AllowedExtensionsService extends Disposable implements IAllowedExte
 			return true;
 		}
 
-		return extensionReason;
+		return extensionReason;*/
 	}
 }
