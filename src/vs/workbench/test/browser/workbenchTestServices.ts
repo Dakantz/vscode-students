@@ -141,7 +141,6 @@ import { TerminalEditorInput } from '../../contrib/terminal/browser/terminalEdit
 import { IEnvironmentVariableService } from '../../contrib/terminal/common/environmentVariable.js';
 import { EnvironmentVariableService } from '../../contrib/terminal/common/environmentVariableService.js';
 import { IRegisterContributedProfileArgs, IShellLaunchConfigResolveOptions, ITerminalProfileProvider, ITerminalProfileResolverService, ITerminalProfileService, type ITerminalConfiguration } from '../../contrib/terminal/common/terminal.js';
-import { IChatEntitlementService } from '../../services/chat/common/chatEntitlementService.js';
 import { IDecoration, IDecorationData, IDecorationsProvider, IDecorationsService, IResourceDecorationChangeEvent } from '../../services/decorations/common/decorations.js';
 import { CodeEditorService } from '../../services/editor/browser/codeEditorService.js';
 import { EditorPaneService } from '../../services/editor/browser/editorPaneService.js';
@@ -375,7 +374,6 @@ export function workbenchInstantiationService(
 	instantiationService.stub(IRemoteSocketFactoryService, new RemoteSocketFactoryService());
 	instantiationService.stub(ICustomEditorLabelService, disposables.add(new CustomEditorLabelService(configService, workspaceContextService)));
 	instantiationService.stub(IHoverService, NullHoverService);
-	instantiationService.stub(IChatEntitlementService, new TestChatEntitlementService());
 	instantiationService.stub(IMarkdownRendererService, instantiationService.createInstance(MarkdownRendererService));
 	instantiationService.stub(IDefaultAccountService, DefaultAccountService);
 
