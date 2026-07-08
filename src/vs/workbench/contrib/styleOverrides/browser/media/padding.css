@@ -32,7 +32,7 @@
  */
 
 /* Header: inset the section title / actions to line up with the rows below. */
-.style-override .monaco-pane-view .pane:not(:has(> .pane-body.chat-viewpane)) > .pane-header {
+.style-override .monaco-pane-view .pane:not(:has(> .pane-body.chat-viewpane))>.pane-header {
 	padding-left: var(--vscode-spacing-size40, 4px);
 	padding-right: 0;
 	margin: 0 var(--vscode-spacing-size40, 4px);
@@ -47,17 +47,17 @@
 
 /* Tighten the part title bar gutters: flush-left, small right inset. Reduce height from 35px to 32px.
  * KEEP IN SYNC WITH: part.ts PartLayout.TITLE_HEIGHT_STYLE_OVERRIDE */
-.style-override.monaco-workbench .part > .title {
+.style-override.monaco-workbench .part>.title {
 	height: 32px;
 	padding-left: var(--vscode-spacing-size40, 4px);
 	padding-right: var(--vscode-spacing-size40, 4px);
 }
 
-.style-override.monaco-workbench .part > .title > .title-label {
+.style-override.monaco-workbench .part>.title>.title-label {
 	line-height: 32px;
 }
 
-.style-override.monaco-workbench .part > .title > .title-actions {
+.style-override.monaco-workbench .part>.title>.title-actions {
 	height: 32px;
 	padding-left: 4px;
 }
@@ -67,21 +67,21 @@
  * configuration dropdown) the extra room by letting the actions grow while the
  * title label stays non-greedy.
  */
-.style-override.monaco-workbench .part > .title:has(.start-debug-action-item) > .title-actions {
+.style-override.monaco-workbench .part>.title:has(.start-debug-action-item)>.title-actions {
 	flex: 2;
 }
 
-.style-override.monaco-workbench .part.editor > .content .editor-group-container > .title .editor-actions {
+.style-override.monaco-workbench .part.editor>.content .editor-group-container>.title .editor-actions {
 	padding: 0 4px;
 }
 
-.style-override.monaco-workbench .part.editor > .content .editor-group-container > .title .editor-actions .actions-container > li:last-child,
-.style-override.monaco-workbench .part > .title .title-actions .actions-container > li:last-child {
+.style-override.monaco-workbench .part.editor>.content .editor-group-container>.title .editor-actions .actions-container>li:last-child,
+.style-override.monaco-workbench .part>.title .title-actions .actions-container>li:last-child {
 	margin-right: 0;
 }
 
 /* Inset the part title label (e.g. "Explorer") to align with the content below. */
-.style-override.monaco-workbench .part > .title > .title-label {
+.style-override.monaco-workbench .part>.title>.title-label {
 	padding-left: var(--vscode-spacing-size80, 8px);
 	overflow: hidden;
 	white-space: nowrap;
@@ -95,7 +95,7 @@
  * except in the Run and Debug view where the header actions (play button +
  * launch configuration dropdown) need the horizontal space instead.
  */
-.style-override.monaco-workbench .part > .title:not(:has(.start-debug-action-item)) > .title-label {
+.style-override.monaco-workbench .part>.title:not(:has(.start-debug-action-item))>.title-label {
 	flex: 2;
 }
 
@@ -107,19 +107,22 @@
 	.agent-session-item .agent-session-title-toolbar .actions-container {
 		gap: 4px;
 	}
+
 	&.chat-view-location-auxiliarybar {
 		.chat-view-title-inner {
 			padding: var(--vscode-spacing-size40, 4px);
 		}
 	}
-	&.chat-view-location-sidebar, &.chat-view-location-panel {
+
+	&.chat-view-location-sidebar,
+	&.chat-view-location-panel {
 		.chat-view-title-inner {
 			padding: 0 var(--vscode-spacing-size40, 4px) 0 var(--vscode-spacing-size80, 8px);
 		}
 	}
 }
 
-.style-override.monaco-workbench .monaco-pane-view .pane > .pane-header > .actions {
+.style-override.monaco-workbench .monaco-pane-view .pane>.pane-header>.actions {
 	margin-right: 0px;
 }
 
@@ -133,7 +136,7 @@
 /* Give the settings / profile (global) actions at the bottom of the default
  * vertical activity bar a 4px bottom margin so they sit consistently above the
  * window edge, matching the pane header margins. */
-.style-override.monaco-workbench .activitybar:not(.top):not(.bottom) > .content > :not(.composite-bar):last-child {
+.style-override.monaco-workbench .activitybar:not(.top):not(.bottom)>.content> :not(.composite-bar):last-child {
 	margin-bottom: calc(var(--vscode-spacing-size20, 2px) + var(--vscode-strokeThickness, 1px));
 }
 
@@ -170,7 +173,8 @@
 	margin-right: 0;
 	margin-left: 4px;
 }
-.style-override.monaco-workbench .scm-view .monaco-tl-contents > div {
+
+.style-override.monaco-workbench .scm-view .monaco-tl-contents>div {
 	padding-right: 4px;
 }
 
@@ -178,11 +182,11 @@
 	margin: 0px 8px 0 2px;
 }
 
-.style-override.monaco-workbench .extensions-viewlet > .header {
+.style-override.monaco-workbench .extensions-viewlet>.header {
 	padding: 4px 8px;
 }
 
-.style-override.monaco-workbench .extensions-viewlet > .extensions .extension-view-header .count-badge-wrapper {
+.style-override.monaco-workbench .extensions-viewlet>.extensions .extension-view-header .count-badge-wrapper {
 	margin-right: 6px;
 }
 
@@ -190,7 +194,8 @@
 	padding: 4px 6px;
 	min-width: 19px;
 	min-height: 19px;
+}
+
 .style-override.monaco-workbench .interactive-session .interactive-input-part {
 	padding-bottom: 0;
 }
-
