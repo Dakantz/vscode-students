@@ -200,8 +200,8 @@
                 }
             },
             "type": "boolean",
-            "default": true,
-            "included": true
+            "default": false,
+            "included": false
         },
         {
             "key": "chat.agentHost.claudeAgent.enabled",
@@ -215,8 +215,8 @@
                 }
             },
             "type": "boolean",
-            "default": true,
-            "included": true,
+            "default": false,
+            "included": false,
             "referencedSettings": [
                 "github.copilot.chat.claudeAgent.enabled"
             ]
@@ -234,7 +234,7 @@
             },
             "type": "boolean",
             "default": false,
-            "included": true
+            "included": false
         },
         {
             "key": "chat.agentHost.otel.enabled",
@@ -249,7 +249,7 @@
             },
             "type": "boolean",
             "default": false,
-            "included": true
+            "included": false
         },
         {
             "key": "chat.agentHost.otel.exporterType",
@@ -288,7 +288,7 @@
                 "console",
                 "file"
             ],
-            "included": true
+            "included": false
         },
         {
             "key": "chat.agentHost.otel.otlpEndpoint",
@@ -303,7 +303,7 @@
             },
             "type": "string",
             "default": "",
-            "included": true
+            "included": false
         },
         {
             "key": "chat.agentHost.otel.captureContent",
@@ -318,7 +318,7 @@
             },
             "type": "boolean",
             "default": false,
-            "included": true
+            "included": false
         },
         {
             "key": "chat.agentHost.otel.outfile",
@@ -333,7 +333,7 @@
             },
             "type": "string",
             "default": "",
-            "included": true
+            "included": false
         },
         {
             "key": "chat.defaultModel",
@@ -348,7 +348,7 @@
             },
             "type": "string",
             "default": "",
-            "included": true
+            "included": false
         },
         {
             "key": "chat.tools.global.autoApprove",
@@ -363,7 +363,7 @@
             },
             "type": "boolean",
             "default": false,
-            "included": true
+            "included": false
         },
         {
             "key": "chat.sessionSync.enabled",
@@ -378,7 +378,7 @@
             },
             "type": "boolean",
             "default": false,
-            "included": true
+            "included": false
         },
         {
             "key": "chat.tools.eligibleForAutoApproval",
@@ -393,7 +393,7 @@
             },
             "type": "object",
             "default": {},
-            "included": true
+            "included": false
         },
         {
             "key": "chat.mcp.access",
@@ -427,7 +427,7 @@
                 "registry",
                 "all"
             ],
-            "included": true
+            "included": false
         },
         {
             "key": "chat.extensionTools.enabled",
@@ -442,7 +442,7 @@
             },
             "type": "boolean",
             "default": true,
-            "included": true
+            "included": false
         },
         {
             "key": "chat.plugins.enabled",
@@ -457,7 +457,7 @@
             },
             "type": "boolean",
             "default": true,
-            "included": true
+            "included": false
         },
         {
             "key": "chat.plugins.enabledPlugins",
@@ -472,7 +472,7 @@
             },
             "type": "object",
             "default": {},
-            "included": true
+            "included": false
         },
         {
             "key": "chat.plugins.strictMarketplaces",
@@ -490,7 +490,7 @@
                 "null"
             ],
             "default": null,
-            "included": true
+            "included": false
         },
         {
             "key": "chat.agent.enabled",
@@ -504,8 +504,8 @@
                 }
             },
             "type": "boolean",
-            "default": true,
-            "included": true
+            "default": false,
+            "included": false
         },
         {
             "key": "chat.agent.networkFilter",
@@ -520,7 +520,7 @@
             },
             "type": "boolean",
             "default": false,
-            "included": true
+            "included": false
         },
         {
             "key": "chat.agent.allowedNetworkDomains",
@@ -535,7 +535,7 @@
             },
             "type": "array",
             "default": [],
-            "included": true
+            "included": false
         },
         {
             "key": "chat.agent.deniedNetworkDomains",
@@ -550,7 +550,7 @@
             },
             "type": "array",
             "default": [],
-            "included": true
+            "included": false
         },
         {
             "key": "chat.useHooks",
@@ -565,7 +565,7 @@
             },
             "type": "boolean",
             "default": true,
-            "included": true
+            "included": false
         },
         {
             "key": "extensions.autoUpdate",

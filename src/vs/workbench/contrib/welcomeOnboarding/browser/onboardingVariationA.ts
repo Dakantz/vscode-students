@@ -10,24 +10,20 @@ import { isCancellationError } from '../../../../base/common/errors.js';
 import { StopWatch } from '../../../../base/common/stopwatch.js';
 import { URI } from '../../../../base/common/uri.js';
 import { isWindows, isMacintosh, isLinux } from '../../../../base/common/platform.js';
-import { assertDefined } from '../../../../base/common/types.js';
 import { FileAccess } from '../../../../base/common/network.js';
 import { ILayoutService } from '../../../../platform/layout/browser/layoutService.js';
 import { KeyCode } from '../../../../base/common/keyCodes.js';
 import { StandardKeyboardEvent } from '../../../../base/browser/keyboardEvent.js';
-import { InputBox } from '../../../../base/browser/ui/inputbox/inputBox.js';
 import { localize } from '../../../../nls.js';
 import { Codicon } from '../../../../base/common/codicons.js';
 import { ThemeIcon } from '../../../../base/common/themables.js';
 import { renderIcon } from '../../../../base/browser/ui/iconLabel/iconLabels.js';
-import { Action } from '../../../../base/common/actions.js';
 import { IWorkbenchThemeService } from '../../../services/themes/common/workbenchThemeService.js';
 import { EXTENSION_INSTALL_SKIP_WALKTHROUGH_CONTEXT, IExtensionGalleryService, IExtensionManagementService } from '../../../../platform/extensionManagement/common/extensionManagement.js';
-import { GitHubPaths, IDefaultAccountService } from '../../../../platform/defaultAccount/common/defaultAccount.js';
+import { IDefaultAccountService } from '../../../../platform/defaultAccount/common/defaultAccount.js';
 import { CancellationToken } from '../../../../base/common/cancellation.js';
 import { INotificationService, Severity } from '../../../../platform/notification/common/notification.js';
 import { ConfigurationTarget, IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
-import { defaultInputBoxStyles } from '../../../../platform/theme/browser/defaultStyles.js';
 import product from '../../../../platform/product/common/product.js';
 import { IFileService } from '../../../../platform/files/common/files.js';
 import { IPathService } from '../../../services/path/common/pathService.js';
@@ -43,9 +39,6 @@ import {
 	IOnboardingThemeOption,
 	getOnboardingStepTitle,
 	getOnboardingStepSubtitle,
-	GHE_FULL_URI_REGEX,
-	GheParseResultKind,
-	parseGheInstanceInput,
 } from '../common/onboardingTypes.js';
 import { IOnboardingService } from '../common/onboardingService.js';
 
@@ -127,8 +120,7 @@ export class OnboardingVariationA extends Disposable implements IOnboardingServi
 	private _userSignedIn = false;
 	private selectedAiMode: AiCollaborationMode = AiCollaborationMode.Balanced;
 	private enterpriseSignInUiState: EnterpriseSignInUiState = 'options';
-	private enterpriseInstanceValue = '';
-	private enterpriseSignInWatch: StopWatch | undefined;
+
 
 	constructor(
 		@ILayoutService private readonly layoutService: ILayoutService,
@@ -226,7 +218,6 @@ export class OnboardingVariationA extends Disposable implements IOnboardingServi
 		this.disposables.add(addDisposableListener(this.backButton, EventType.CLICK, () => {
 			if (this.currentStepIndex === 0 && this.enterpriseSignInUiState === 'instance') {
 				this._logAction('cancelEnterpriseInstancePrompt');
-				this.enterpriseSignInWatch = undefined;
 				this._setEnterpriseSignInUiState('options');
 				return;
 			}
@@ -312,8 +303,6 @@ export class OnboardingVariationA extends Disposable implements IOnboardingServi
 			const leavingStep = this.steps[this.currentStepIndex];
 			if (leavingStep === OnboardingStepId.SignIn) {
 				this.enterpriseSignInUiState = 'options';
-				this.enterpriseInstanceValue = '';
-				this.enterpriseSignInWatch = undefined;
 			}
 			if (leavingStep === OnboardingStepId.Personalize) {
 				this._applyKeymap(this.selectedKeymapId);
@@ -492,7 +481,7 @@ export class OnboardingVariationA extends Disposable implements IOnboardingServi
 		} else {
 			switch (this.enterpriseSignInUiState) {
 				case 'instance':
-					this._renderEnterpriseInstanceForm(actions);
+					// this._renderEnterpriseInstanceForm(actions);
 					break;
 				case 'progress':
 					this._renderEnterpriseSignInProgress(actions);
@@ -543,94 +532,6 @@ export class OnboardingVariationA extends Disposable implements IOnboardingServi
 		}));
 	}
 
-	private static readonly GHE_INPUT_ACTION_PADDING = 28;
-
-	private _renderEnterpriseInstanceForm(actions: HTMLElement): void {
-		const enterprisePromptLabel = this._getEnterpriseInstancePromptLabel();
-
-		const container = append(actions, $('.onboarding-a-signin-ghe-input'));
-
-		const submitAction = this.stepDisposables.add(new Action(
-			'onboarding.signIn.enterprise.submit',
-			localize('onboarding.signIn.enterprise.continue', "Continue"),
-			ThemeIcon.asClassName(Codicon.arrowRight),
-			false,
-		));
-
-		const inputBox = this.stepDisposables.add(new InputBox(container, undefined, {
-			placeholder: localize('onboarding.signIn.enterprise.placeholder', 'i.e. "octocat" or "https://octocat.ghe.com"...'),
-			ariaLabel: enterprisePromptLabel,
-			actions: [submitAction],
-			inputBoxStyles: defaultInputBoxStyles,
-		}));
-		inputBox.value = this.enterpriseInstanceValue;
-		inputBox.paddingRight = OnboardingVariationA.GHE_INPUT_ACTION_PADDING;
-		const input = this._registerStepFocusable(inputBox.inputElement);
-
-		const submit = async () => {
-			const result = parseGheInstanceInput(inputBox.value);
-			if (result.kind === GheParseResultKind.Empty || result.kind === GheParseResultKind.Invalid) {
-				validate();
-				return;
-			}
-			await this._submitEnterpriseInstance(result.resolvedUri);
-		};
-		submitAction.run = submit;
-
-		const message = append(container, $('.onboarding-a-signin-ghe-message'));
-
-		const validate = (): boolean => {
-			this.enterpriseInstanceValue = inputBox.value;
-			inputBox.element.classList.remove('error');
-			message.classList.remove('error', 'info');
-
-			const result = parseGheInstanceInput(inputBox.value);
-			switch (result.kind) {
-				case GheParseResultKind.Empty:
-					message.textContent = enterprisePromptLabel;
-					submitAction.enabled = false;
-					return false;
-				case GheParseResultKind.SingleWord:
-					message.classList.add('info');
-					message.textContent = localize('onboarding.signIn.enterprise.resolve', "Will resolve to {0}", result.resolvedUri);
-					submitAction.enabled = true;
-					return true;
-				case GheParseResultKind.FullUri:
-					submitAction.enabled = true;
-					message.textContent = '';
-					return true;
-				case GheParseResultKind.Invalid:
-					inputBox.element.classList.add('error');
-					message.classList.add('error');
-					message.textContent = localize('onboarding.signIn.enterprise.invalid', 'You must enter a valid {0} instance (i.e. "octocat" or "https://octocat.ghe.com")', defaultChat.provider.enterprise.name);
-					submitAction.enabled = false;
-					return false;
-			}
-		};
-
-		this.stepDisposables.add(inputBox.onDidChange(() => {
-			validate();
-		}));
-
-		this.stepDisposables.add(addDisposableListener(input, EventType.KEY_DOWN, e => {
-			const event = new StandardKeyboardEvent(e);
-			if (event.keyCode === KeyCode.Enter) {
-				e.preventDefault();
-				void submitAction.run();
-				return;
-			}
-
-			if (event.keyCode === KeyCode.Escape) {
-				e.preventDefault();
-				e.stopPropagation();
-				this._logAction('cancelEnterpriseInstancePrompt');
-				this.enterpriseSignInWatch = undefined;
-				this._setEnterpriseSignInUiState('options');
-			}
-		}));
-
-		validate();
-	}
 
 	private _renderEnterpriseSignInProgress(actions: HTMLElement): void {
 		const container = append(actions, $('.onboarding-a-signin-ghe-progress'));
@@ -638,13 +539,9 @@ export class OnboardingVariationA extends Disposable implements IOnboardingServi
 		const spinner = append(container, $('span'));
 		spinner.classList.add(...ThemeIcon.asClassNameArray(Codicon.loading), 'codicon-modifier-spin');
 		spinner.setAttribute('aria-hidden', 'true');
-		const message = append(container, $('.onboarding-a-signin-ghe-progress-message'));
-		message.textContent = localize('onboarding.signIn.enterprise.progress', "Waiting for {0} sign-in to complete...", defaultChat.provider.enterprise.name);
+
 	}
 
-	private _getEnterpriseInstancePromptLabel(): string {
-		return localize('onboarding.signIn.enterprise.prompt', "What is your {0} instance?", defaultChat.provider.enterprise.name);
-	}
 
 	private _setEnterpriseSignInUiState(state: EnterpriseSignInUiState): void {
 		this.enterpriseSignInUiState = state;
@@ -715,69 +612,14 @@ export class OnboardingVariationA extends Disposable implements IOnboardingServi
 	}
 
 	private async _handleEnterpriseSignIn(): Promise<void> {
-		const existingUri = this.configurationService.getValue<string>(defaultChat.providerUriSetting);
-		if (typeof existingUri !== 'string' || !GHE_FULL_URI_REGEX.test(existingUri)) {
-			this.enterpriseInstanceValue = existingUri ?? '';
-			this.enterpriseSignInWatch = StopWatch.create();
-			this._setEnterpriseSignInUiState('instance');
-			return;
-		}
-
-		this.enterpriseInstanceValue = existingUri;
 		await this._runEnterpriseSignInSetup();
 	}
 
-	private async _submitEnterpriseInstance(resolvedUri: string): Promise<void> {
-		try {
-			await this.configurationService.updateValue(defaultChat.providerUriSetting, resolvedUri, ConfigurationTarget.USER);
-			this.enterpriseInstanceValue = resolvedUri;
-			await this._runEnterpriseSignInSetup();
-		} catch {
-			this.enterpriseSignInWatch = undefined;
-			this._setEnterpriseSignInUiState('instance');
-			this._notifyEnterpriseSignInError();
-		}
-	}
-
 	private async _runEnterpriseSignInSetup(): Promise<void> {
-		const watch = this.enterpriseSignInWatch ?? StopWatch.create();
-		const provider = defaultChat.provider.enterprise.id;
-		this._setEnterpriseSignInUiState('progress');
-
-		try {
-			const success = await this.commandService.executeCommand<boolean>('workbench.action.chat.triggerSetup', undefined, {
-				disableChatViewReveal: true,
-				setupStrategy: ChatSetupStrategy.SetupWithEnterpriseProvider,
-			});
-
-			if (success) {
-				this._userSignedIn = true;
-				this.telemetryService.publicLog2<InstallChatEvent, InstallChatClassification>('commandCenter.chatInstall', { installResult: 'installed', installDuration: watch.elapsed(), signUpErrorCode: undefined, provider });
-				this._nextStep();
-			} else {
-				this._setEnterpriseSignInUiState('options');
-			}
-		} catch (error) {
-			if (isCancellationError(error)) {
-				this._setEnterpriseSignInUiState('options');
-				this.telemetryService.publicLog2<InstallChatEvent, InstallChatClassification>('commandCenter.chatInstall', { installResult: 'cancelled', installDuration: watch.elapsed(), signUpErrorCode: undefined, provider });
-				return;
-			}
-
-			this._setEnterpriseSignInUiState('instance');
-			this.telemetryService.publicLog2<InstallChatEvent, InstallChatClassification>('commandCenter.chatInstall', { installResult: 'failedNotSignedIn', installDuration: watch.elapsed(), signUpErrorCode: undefined, provider });
-			this._notifyEnterpriseSignInError();
-		} finally {
-			this.enterpriseSignInWatch = undefined;
-		}
+		return new Promise<void>(async (resolve) => {
+		})
 	}
 
-	private _notifyEnterpriseSignInError(): void {
-		this.notificationService.notify({
-			severity: Severity.Error,
-			message: localize('onboarding.signIn.enterprise.error', "GitHub Enterprise sign-in failed. Check your instance URL and try again."),
-		});
-	}
 
 	// =====================================================================
 	// Step: Personalize (Theme + Keymap)
@@ -1176,15 +1018,6 @@ export class OnboardingVariationA extends Disposable implements IOnboardingServi
 		}
 	}
 
-	private _createInlineLink(parent: HTMLElement, label: string, href: string): HTMLAnchorElement {
-		const link = this._registerStepFocusable(append(parent, $<HTMLAnchorElement>('a.onboarding-a-inline-link')));
-		link.textContent = label;
-		link.href = href;
-		link.target = '_blank';
-		link.rel = 'noopener';
-		return link;
-	}
-
 	// =====================================================================
 	// Radio-group keyboard navigation (roving tabindex)
 	// =====================================================================
@@ -1324,8 +1157,6 @@ export class OnboardingVariationA extends Disposable implements IOnboardingServi
 		this.footerFocusableElements.length = 0;
 		this.stepFocusableElements.length = 0;
 		this.enterpriseSignInUiState = 'options';
-		this.enterpriseInstanceValue = '';
-		this.enterpriseSignInWatch = undefined;
 		this._isShowing = false;
 		this.disposables.clear();
 		this.stepDisposables.clear();

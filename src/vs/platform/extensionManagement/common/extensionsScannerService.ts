@@ -739,7 +739,7 @@ class ExtensionsScanner extends Disposable {
 			isValid,
 			validations,
 			preRelease: !!metadata?.preRelease,
-			forceAutoUpdate: this.productBuiltInExtensionsEnabledWithAutoUpdates.has(id.toLowerCase()) && this.productQuality === 'stable',
+			forceAutoUpdate: this.productBuiltInExtensionsEnabledWithAutoUpdates?.has(id.toLowerCase()) && this.productQuality === 'stable',
 		};
 		if (input.validate) {
 			extension = this.validate(extension, input);

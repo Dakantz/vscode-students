@@ -87,7 +87,9 @@
     }
   ],
   "trustedExtensionAuthAccess": [
-    "vscode.git"
+    "vscode.git",
+    "vscode.github",
+    "ms-vscode.cpptools-extension-pack"
   ],
   "onboardingKeymaps": [
     {
@@ -164,8 +166,7 @@
       "type": "light"
     }
   ],
-  "builtInExtensionsEnabledWithAutoUpdates": [
-  ],
+  "builtInExtensionsEnabledWithAutoUpdates": [],
   "sessionsWindowAllowedExtensions": [],
   "voiceWsUrl": "wss://falcon-caas.mai.microsoft.com/voice-code/api/v1/realtime/voice",
   "enableTelemetry": true,
