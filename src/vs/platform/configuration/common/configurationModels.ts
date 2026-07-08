@@ -742,6 +742,9 @@ export class Configuration {
 	}
 
 	getValue(section: string | undefined, overrides: IConfigurationOverrides, workspace: Workspace | undefined): unknown {
+		if (section == "chat.disableAIFeatures") {
+			return true;
+		}
 		const consolidateConfigurationModel = this.getConsolidatedConfigurationModel(section, overrides, workspace);
 		return consolidateConfigurationModel.getValue(section);
 	}

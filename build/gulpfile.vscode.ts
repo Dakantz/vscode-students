@@ -185,7 +185,7 @@ task.task(task.define('core-ci-old', task.series(
 
 task.task(task.define('core-ci', task.series(
 	copyCodiconsTask,
-	compileNonNativeExtensionsBuildTask,
+	// compileNonNativeExtensionsBuildTask,
 	compileExtensionMediaBuildTask,
 	writeISODate('out-build'),
 	// Type-check with tsgo (no emit)
